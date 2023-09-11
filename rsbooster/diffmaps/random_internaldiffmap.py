@@ -108,8 +108,7 @@ def main():
     except ValueError:
         op = gemmi.Operation(args.symop)
     
-    #cb_op = "y-z,-x+y+z,x+z+1/2"
-    cb_op = "a+b,a-b,-c"
+    cb_op = "y-z,-x+y+z,x+z+1/2"
     transformed_op = gemmi.Op(cb_op).inverse()*op*gemmi.Op(cb_op) 
     print(transformed_op)
     new_mtz = mtz.expand_to_p1().expand_anomalous().apply_symop(transformed_op)

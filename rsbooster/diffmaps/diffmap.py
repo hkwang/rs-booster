@@ -65,6 +65,13 @@ def parse_arguments():
         help="If set, dmax to truncate difference map",
     )
     parser.add_argument(
+        "-m",
+        "--dmin",
+        type=float,
+        default=None,
+        help="If set, dmin to truncate difference map",
+    )
+    parser.add_argument(
         "-o", "--outfile", default="diffmap.mtz", help="Output MTZ filename"
     )
 
@@ -111,7 +118,8 @@ def main():
     if args.dmax is None:
         diff.write_mtz(args.outfile)
     else:
-        diff = diff.loc[diff.compute_dHKL()["dHKL"] < args.dmax]
+        dhkl = diff.compute_dHKL()["dHKL"]
+        diff = diff.loc[(dhkl< args.dmax)*(dhkl>args.dmin)]
         diff.write_mtz(args.outfile)
 
 

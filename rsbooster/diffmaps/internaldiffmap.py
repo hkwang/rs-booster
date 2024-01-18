@@ -50,6 +50,15 @@ def parse_arguments():
             "Can be given as ISYM if used with a `spacegroup` argument."
         ),
     )
+    
+    parser.add_argument(
+        "-c",
+        "--cb_op",
+        default="x,y,z",
+        help=(
+            "Change-of-basis operation from high- to low-symmetry spacegroup"
+        ),
+    )
 
     # Optional arguments
     parser.add_argument(
@@ -65,6 +74,13 @@ def parse_arguments():
         type=float,
         default=None,
         help="If set, dmax to truncate difference map",
+    )
+    parser.add_argument(
+        "-m",
+        "--dmin",
+        type=float,
+        default=None,
+        help="If set, dmin to truncate difference map",
     )
     parser.add_argument(
         "-sg",
@@ -107,14 +123,12 @@ def main():
         op = sg.operations().sym_ops[isym]
     except ValueError:
         op = gemmi.Operation(args.symop)
-    
-    #cb_op = "y-z,-x+y+z,x+z+1/2"
-    cb_op = "a+b,a-b,-c"
-    transformed_op = gemmi.Op(cb_op).inverse()*op*gemmi.Op(cb_op) 
+        
+    transformed_op = gemmi.Op(args.cb_op).inverse()*op*gemmi.Op(args.cb_op) 
     print(transformed_op)
     new_mtz = mtz.expand_to_p1().expand_anomalous().apply_symop(transformed_op)
     internal = mtz.merge(
-        new_mtz, on=["H", "K", "L"], suffixes=("1", "2"), how="inner"
+        mtz.apply_symop(op).hkl_to_asu(), on=["H", "K", "L"], suffixes=("1", "2")
     )
     internal["DF"] = internal["F1"] - internal["F2"]
     internal["SigDF"] = np.sqrt((internal["SigF1"] ** 2) + (internal["SigF2"] ** 2))
@@ -135,7 +149,8 @@ def main():
     if args.dmax is None:
         internal.write_mtz(args.outfile)
     else:
-        internal = internal.loc[internal.compute_dHKL()["dHKL"] < args.dmax]
+        dhkl = internal.compute_dHKL()["dHKL"]
+        internal = internal.loc[(dhkl < args.dmax) * (dhkl > args.dmin)]
         internal.write_mtz(args.outfile)
 
 

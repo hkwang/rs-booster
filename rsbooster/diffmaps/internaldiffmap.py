@@ -3,6 +3,7 @@
 Make an internal difference map using the given symmetry operation
 """
 
+
 import argparse
 import numpy as np
 import reciprocalspaceship as rs
